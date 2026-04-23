@@ -125,7 +125,7 @@ A backup is created before modifying any file.
 ## Requirements
 
 - PHP ^8.1
-- Laravel ^10.0|^11.0
+- Laravel ^12
 
 ## License
 
