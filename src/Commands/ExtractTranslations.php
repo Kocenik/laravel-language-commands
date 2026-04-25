@@ -28,15 +28,19 @@ class ExtractTranslations extends Command
      *
      * @var array
      */
-    protected array $errors = [];
 
-    protected $added = [];
+    protected array $errors = [];
+    protected array $added = [];
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
+        // Resets them on every call
+        $this->added  = [];
+        $this->errors = [];
+
         //Base directory in which to search
         $viewPath = resource_path('views/' . $this->argument('view'));
 
@@ -90,7 +94,6 @@ class ExtractTranslations extends Command
 
         // Display successfully added translations
         if (!empty($this->added)) {
-            $this->newLine();
             $this->info('Successfully Added:');
             $this->table(
                 ['File', 'Key', 'Value'],

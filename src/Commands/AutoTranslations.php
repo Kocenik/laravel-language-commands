@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class AutoTranslations extends Command
 {
@@ -52,10 +53,14 @@ class AutoTranslations extends Command
 
 
 
+
         // Execute wrap and extraction of translations for English
         $this->info('Starting extraction in English...');
         foreach ($files as $file) {
-            $this->call('translations:extract', ['view' => str_replace($dir . DIRECTORY_SEPARATOR, '', $file->getRealPath()),
+            // Normalise file path across all platforms
+            $path = str_replace('\\', '/', $file->getRealPath());
+
+            $this->call('translations:extract', ['view' => Str::after($path, 'resources/views/'),
                                                  '--wrap' => true]);
         }
 
@@ -65,20 +70,27 @@ class AutoTranslations extends Command
 
 
         // Extract files for all other user defined languages
-        $languages = $this->ask('What other languages do you want to extract? Example: en, bg, etc.');
+        $input = $this->ask('What other languages do you want to extract? (single: "bg" or multiple: "bg, fr, de")');
+        $languages = collect(explode(',', $input ?? ''))
+            ->map(fn($lang) => trim($lang))
+            ->filter()
+            ->values();
 
         foreach ($languages as $language) {
-            $this->call('translations:extract', ['view' => str_replace($dir . DIRECTORY_SEPARATOR, '', $file->getRealPath()),
-                                                 '--lang' => $language]);
+            foreach ($files as $file) {
+                // Normalise file path across all platforms
+                $path = str_replace('\\', '/', $file->getRealPath());
 
-            $this->newLine();
-            $this->info('Prepared files for ' . $language);
+                $this->call('translations:extract', ['view'   => Str::after($path, 'resources/views/'),
+                                                     '--lang' => $language]);
+                $this->newLine();
+            }
         }
 
 
         // Runtime
         $this->newLine();
-        $this->info('Total files found and converted: ' . $count);
+        $this->info('Total files found and converted: ' . $tableRows->count());
         $this->info('Time Elapsed: ' . $startClock->diffInMilliseconds() . ' Miliseconds');
         $this->warn('Done. In case of errors revert back to backups using translations:revert');
     }
